@@ -156,7 +156,10 @@ void callFunc(const Func* func, void *ctx,
   if (!retType) {
     GP_args[GP_count++] = (int64_t)&ret;
   } else if (isBuiltinByRef(retType)) {
+#ifdef __aarch64__
+#else
     GP_args[GP_count++] = (int64_t)&ret.m_data;
+#endif
   }
 
   if (ctx) {

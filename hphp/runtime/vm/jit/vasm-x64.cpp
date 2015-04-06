@@ -830,7 +830,9 @@ void lower_svcreq(Vunit& unit, Vlabel b, const Vinstr& inst) {
   v << ldimmq{svcreq.req, rdi};
   arg_regs |= rAsm | rdi | rVmFp | rVmSp;
 
+#ifdef THUNDER_DEV
   v << jmpi{TCA(handleSRHelper), arg_regs};
+#endif
 }
 
 void lowerSrem(Vunit& unit, Vlabel b, size_t iInst) {

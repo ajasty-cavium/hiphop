@@ -181,7 +181,7 @@ void* hardwareCounterWrapper(void* varg) {
   HardwareCounter::Reset();
   arg->pid = arg->func(arg->afdt_fd);
   // tell the main thread that pid has been set.
-  arg->barrier.wait();
+  //arg->barrier.wait();
   if (arg->pid < 0) return nullptr;
 
   // Wait until the main thread is ready to join us.
@@ -189,7 +189,7 @@ void* hardwareCounterWrapper(void* varg) {
   // now, at the time any of the do_* functions are called, any live threads are
   // waiting here on this barrier; so there is no problem with fork, malloc,
   // exec.
-  arg->barrier.wait();
+  //arg->barrier.wait();
   HardwareCounter::GetPerfEvents(
     [](const std::string& event, int64_t value, void* data) {
       auto events = reinterpret_cast<int64_t*>(data);
@@ -222,7 +222,7 @@ void hardwareCounterWrapperHelper(pid_t (*func)(int), int afdt_fd) {
   // Wait for the pid to be set. Note that we must not add any code here that
   // could cause issues for the fork (eg malloc); we should wait on the barrier
   // immediately after the thread is created.
-  arg->barrier.wait();
+  //arg->barrier.wait();
   if (arg->pid > 0) {
     // successfully forked, so don't join until waitpid.
     s_pidToHCWMap[arg->pid] = std::move(arg);
@@ -375,7 +375,7 @@ void do_waitpid(int afdt_fd) {
     auto hcw = std::move(it->second);
     s_pidToHCWMap.erase(it);
     hcw->events = events;
-    hcw->barrier.wait();
+    //hcw->barrier.wait();
     pthread_join(hcw->thr, nullptr);
   }
 
