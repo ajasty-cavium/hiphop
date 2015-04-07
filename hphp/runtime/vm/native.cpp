@@ -18,6 +18,7 @@
 #include "hphp/runtime/vm/runtime.h"
 #include "hphp/runtime/vm/func-emitter.h"
 #include "hphp/runtime/vm/unit.h"
+#include <ffi.h>
 
 namespace HPHP { namespace Native {
 //////////////////////////////////////////////////////////////////////////////
@@ -154,9 +155,15 @@ void callFunc(const Func* func, void *ctx,
   auto retType = func->returnType();
 
   if (!retType) {
+#ifndef __aarch64__
     GP_args[GP_count++] = (int64_t)&ret;
+#endif
   } else if (isBuiltinByRef(retType)) {
 #ifdef __aarch64__
+    if (ret.m_type == KindOfObject)
+      GP_args[8] = (int64_t)&ret.m_data;
+    else
+      GP_args[GP_count++] = (int64_t)&ret.m_data;
 #else
     GP_args[GP_count++] = (int64_t)&ret.m_data;
 #endif
@@ -176,8 +183,12 @@ void callFunc(const Func* func, void *ctx,
   BuiltinFunction f = func->nativeFuncPtr();
 
   if (!retType) {
+    Variant *v = (Variant*)&ret;
+    GP_args[8] = (int64_t)v;
+
     // A folly::none return signifies Variant.
-    callFuncInt64Impl(f, GP_args, GP_count, SIMD_args, SIMD_count);
+    *v = callFuncVariantImpl(f, GP_args, GP_count, SIMD_args, SIMD_count);
+
     if (ret.m_type == KindOfUninit) {
       ret.m_type = KindOfNull;
     }
